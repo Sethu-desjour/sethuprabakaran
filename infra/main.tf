@@ -281,7 +281,10 @@ data "aws_iam_policy_document" "github_assume" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/${var.github_branch}"]
+      values = compact([
+        "repo:${var.github_repo}:ref:refs/heads/${var.github_branch}",
+        var.github_immutable_repo == null ? "" : "repo:${var.github_immutable_repo}:ref:refs/heads/${var.github_branch}",
+      ])
     }
   }
 }

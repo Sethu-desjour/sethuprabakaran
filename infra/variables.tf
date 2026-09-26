@@ -15,6 +15,12 @@ variable "github_repo" {
   type        = string
 }
 
+variable "github_immutable_repo" {
+  description = "Repo in GitHub's immutable OIDC subject format, owner@id/name@id. Get it from: gh api repos/OWNER/REPO/actions/oidc/customization/sub"
+  type        = string
+  default     = null
+}
+
 variable "github_branch" {
   description = "Branch allowed to deploy."
   type        = string
