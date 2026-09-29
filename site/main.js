@@ -21,3 +21,14 @@ window.addEventListener("scroll", onScroll, { passive: true });
 onScroll();
 
 document.getElementById("year").textContent = new Date().getFullYear();
+
+// Build the mailto link at runtime so the address isn't in the HTML for scrapers.
+// Without JS the link falls back to LinkedIn.
+const rev = (s) => s.split("").reverse().join("");
+document.querySelectorAll(".js-email").forEach((a) => {
+  const addr = `${rev(a.dataset.u)}@${rev(a.dataset.d)}`;
+  a.href = `mailto:${addr}`;
+  a.textContent = addr;
+  a.removeAttribute("target");
+  a.removeAttribute("rel");
+});

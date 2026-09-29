@@ -77,6 +77,7 @@ a { color: inherit; }
 .hero__bg {
   position: absolute; inset: 0;
   background: url("/assets/sethu.jpg") center 25% / cover no-repeat;
+  background-image: image-set(url("/assets/sethu.webp") type("image/webp"), url("/assets/sethu.jpg") type("image/jpeg"));
   filter: grayscale(1) sepia(.35) contrast(.9);
   opacity: .22;
 }
