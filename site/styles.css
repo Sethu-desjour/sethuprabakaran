@@ -6,10 +6,11 @@
   --line: #ddd2c4;
   --accent: #b06a45;
   --accent-ink: #fff;
-  --serif: "Fraunces", Georgia, serif;
+  --serif: "Newsreader", Georgia, serif;
   --mono: "IBM Plex Mono", ui-monospace, monospace;
   --sans: "Inter", system-ui, -apple-system, sans-serif;
   --max: 1080px;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -20,6 +21,7 @@ body {
   color: var(--ink);
   font: 400 17px/1.7 var(--sans);
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip; /* 100vw includes the scrollbar on some systems */
 }
 img { max-width: 100%; display: block; }
 a { color: inherit; }
@@ -28,7 +30,7 @@ a { color: inherit; }
 .nav {
   position: fixed; inset: 0 0 auto 0; z-index: 10;
   display: flex; justify-content: space-between; align-items: center; gap: 1rem;
-  padding: 1rem clamp(1rem, 4vw, 2.5rem);
+  padding: 1rem var(--gutter);
   background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid transparent;
@@ -72,7 +74,7 @@ a { color: inherit; }
 /* HERO */
 .hero {
   position: relative; min-height: 100svh; display: grid; place-items: center;
-  padding: 7rem clamp(1rem, 4vw, 2.5rem) 5rem; overflow: hidden; text-align: center;
+  padding: 7rem var(--gutter) 5rem; overflow: hidden; text-align: center;
 }
 .hero__bg {
   position: absolute; inset: 0;
@@ -99,10 +101,11 @@ a { color: inherit; }
 /* SECTIONS */
 .section {
   max-width: var(--max); margin: 0 auto;
-  padding: clamp(4rem, 10vw, 7rem) clamp(1rem, 4vw, 2.5rem);
+  padding: clamp(4rem, 10vw, 7rem) var(--gutter);
 }
 .section--tint { max-width: none; background: var(--bg-tint); }
-.section--tint > * { max-width: var(--max); margin-left: auto; margin-right: auto; }
+/* Same content width as untinted sections (whose max-width includes the gutters). */
+.section.section--tint > * { max-width: calc(var(--max) - 2 * var(--gutter)); margin-left: auto; margin-right: auto; }
 
 /* CHIPS */
 .chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .6rem; }
@@ -122,7 +125,8 @@ a { color: inherit; }
   list-style: none; padding: 0; margin: 0;
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line);
 }
-.stats li { background: var(--bg-tint); padding: 1.75rem 1.5rem; }
+.stats li { background: var(--bg-tint); padding: 1.75rem 1.5rem; text-align: center; }
+#record-title { text-align: center; }
 .stats strong { display: block; font: 400 clamp(1.9rem, 4vw, 2.6rem)/1.1 var(--serif); margin-bottom: .4rem; }
 .stats span { color: var(--ink-soft); font-size: .95rem; }
 
@@ -159,7 +163,17 @@ a { color: inherit; }
 .card p { margin: 0; color: var(--ink-soft); font-size: .95rem; }
 
 /* QUOTES */
-.quotes { display: flex; gap: 1.5rem; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 1rem; }
+/* Full-bleed carousel: scrolls edge to edge of the window, while the first and last
+   cards line up with the page content. */
+.quotes {
+  /* Distance from the content edge to the window edge. Not a % so scroll-padding
+     (which resolves % against the carousel itself) gets the same value. */
+  --bleed: calc((100vw - min(var(--max), 100vw)) / 2 + var(--gutter));
+  display: flex; gap: 1.5rem; overflow-x: auto; scroll-snap-type: x mandatory;
+  margin: 0 calc(-1 * var(--bleed)); padding: 0 var(--bleed) 1rem;
+  scroll-padding: 0 var(--bleed); scrollbar-width: none;
+}
+.quotes::-webkit-scrollbar { display: none; }
 .quote {
   flex: 0 0 min(34rem, 88vw); scroll-snap-align: start; margin: 0;
   padding: 2rem; border: 1px solid var(--line); background: #fbf8f3;
@@ -168,7 +182,17 @@ a { color: inherit; }
 .quote blockquote::before { content: "“"; display: block; font: 400 3rem/1 var(--serif); color: var(--accent); }
 .quote figcaption strong { display: block; }
 .quote figcaption span { color: var(--ink-soft); font-size: .9rem; }
-.quotes__hint { margin: .5rem 0 0; font: 400 12px/1 var(--mono); letter-spacing: .08em; color: var(--ink-soft); }
+.quotes__dots { display: flex; justify-content: center; gap: .25rem; margin-top: 1rem; }
+.quotes__dots button {
+  width: 28px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer;
+  display: grid; place-items: center;
+}
+.quotes__dots button::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--line); transition: background .2s, transform .2s;
+}
+.quotes__dots button:hover::before { background: var(--ink-soft); }
+.quotes__dots button[aria-current="true"]::before { background: var(--accent); transform: scale(1.25); }
 
 /* BOOK */
 .book { text-align: center; }
@@ -177,7 +201,7 @@ a { color: inherit; }
 
 /* FOOTER */
 .footer {
-  border-top: 1px solid var(--line); padding: 2.5rem clamp(1rem, 4vw, 2.5rem);
+  border-top: 1px solid var(--line); padding: 2.5rem var(--gutter);
   display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; align-items: center;
   font: 400 13px/1.5 var(--mono); color: var(--ink-soft);
 }

@@ -32,3 +32,31 @@ document.querySelectorAll(".js-email").forEach((a) => {
   a.removeAttribute("target");
   a.removeAttribute("rel");
 });
+
+// Testimonial carousel dots: one per card, highlight the current one, click to jump.
+const track = document.querySelector(".quotes");
+const dotsEl = document.querySelector(".quotes__dots");
+if (track && dotsEl) {
+  const cards = [...track.children];
+  const dots = cards.map((card, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-label", `Testimonial ${i + 1} of ${cards.length}`);
+    b.addEventListener("click", () => {
+      track.scrollTo({ left: card.offsetLeft - cards[0].offsetLeft, behavior: "smooth" });
+    });
+    dotsEl.appendChild(b);
+    return b;
+  });
+  const update = () => {
+    const x = track.scrollLeft;
+    const atEnd = x + track.clientWidth >= track.scrollWidth - 2;
+    let current = 0;
+    cards.forEach((c, i) => { if (c.offsetLeft - cards[0].offsetLeft <= x + 10) current = i; });
+    if (atEnd) current = cards.length - 1;
+    dots.forEach((d, i) => d.setAttribute("aria-current", i === current ? "true" : "false"));
+  };
+  track.addEventListener("scroll", update, { passive: true });
+  window.addEventListener("resize", update);
+  update();
+}
