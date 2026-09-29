@@ -10,13 +10,24 @@ DISTRIBUTION_ID="${DISTRIBUTION_ID:-$(terraform -chdir=infra output -raw distrib
 
 echo "Deploying to s3://$BUCKET (distribution $DISTRIBUTION_ID)"
 
+# Stage a copy with ?v=<content hash> on CSS/JS references, so browsers holding
+# the week-long cached copy fetch the new file as soon as it changes.
+BUILD="$(mktemp -d)"
+trap 'rm -rf "$BUILD"' EXIT
+cp -R site/. "$BUILD"
+for f in styles.css main.js; do
+  v="$(shasum "site/$f" | cut -c1-8)"
+  sed -i.bak "s#\"/$f\"#\"/$f?v=$v\"#g" "$BUILD"/*.html
+done
+rm -f "$BUILD"/*.bak
+
 # Long-lived cache for static assets.
-aws s3 sync site/ "s3://$BUCKET" --delete \
+aws s3 sync "$BUILD/" "s3://$BUCKET" --delete \
   --exclude "*.html" \
   --cache-control "public, max-age=604800"
 
 # HTML always revalidates so new content shows up immediately.
-aws s3 sync site/ "s3://$BUCKET" --delete \
+aws s3 sync "$BUILD/" "s3://$BUCKET" --delete \
   --exclude "*" --include "*.html" \
   --cache-control "no-cache" \
   --content-type "text/html; charset=utf-8"
