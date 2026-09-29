@@ -159,22 +159,33 @@ resource "aws_cloudfront_response_headers_policy" "security" {
   }
 }
 
-# Redirect www -> apex and /path/ -> /path/index.html.
+# Redirect www -> apex and /path/index.html -> /path/ (one canonical URL per page),
+# then rewrite /path/ -> /path/index.html for the S3 lookup.
 resource "aws_cloudfront_function" "rewrite" {
   name    = "${local.bucket}-rewrite"
   runtime = "cloudfront-js-2.0"
   publish = true
   code    = <<-EOT
+    function redirect(uri, qs) {
+      var parts = [];
+      for (var k in qs) {
+        var vals = qs[k].multiValue || [qs[k]];
+        for (var i = 0; i < vals.length; i++) {
+          parts.push(vals[i].value === "" ? k : k + "=" + vals[i].value);
+        }
+      }
+      return {
+        statusCode: 301,
+        statusDescription: "Moved Permanently",
+        headers: { location: { value: "https://${var.domain_name}" + uri + (parts.length ? "?" + parts.join("&") : "") } }
+      };
+    }
+
     function handler(event) {
       var req = event.request;
       var host = req.headers.host && req.headers.host.value;
-      if (host === "${local.www_domain}") {
-        return {
-          statusCode: 301,
-          statusDescription: "Moved Permanently",
-          headers: { location: { value: "https://${var.domain_name}" + req.uri } }
-        };
-      }
+      var uri = req.uri.endsWith("/index.html") ? req.uri.slice(0, -"index.html".length) : req.uri;
+      if (host === "${local.www_domain}" || uri !== req.uri) return redirect(uri, req.querystring);
       if (req.uri.endsWith("/")) req.uri += "index.html";
       return req;
     }
